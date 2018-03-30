@@ -62,27 +62,29 @@ function New-SCCTermQuery {
 
 function Get-SCCDataCustomerListCustomer {
     param (
-        [Parameter(Mandatory)][String]$customer_id,
+        [Parameter(Mandatory)][String]$customer_no,
         [Parameter(Mandatory)][String]$list_id
     )
-    $URL = "https://$Script:SCCAPIRoot/s/-/dw/data/v18_3/customer_lists/$list_id/customers/$customer_id"
+    $URL = "https://$Script:SCCAPIRoot/s/-/dw/data/v18_3/customer_lists/$list_id/customers/$customer_no"
 
-    Invoke-SCCAPIFunction -URL $URL -Method Get
+    Invoke-SCCAPIFunction -URL $URL -Method Get -APIName data
 }
 
 function Get-SCCShopCustomer {
     param (
-        [Parameter(Mandatory)][String]$customer_id
+        [Parameter(Mandatory)][String]$customer_id,
+        $SiteName
     )
     $URL = "https://$Script:SCCAPIRoot/s/-/dw/shop/v18_3/customers/$customer_id"
+    $URL = "https://$Script:SCCAPIRoot/s/$SiteName/dw/shop/v18_3/customers/$customer_id"
 
-    Invoke-SCCAPIFunction -URL $URL -Method Get
+    Invoke-SCCAPIFunction -URL $URL -Method Get -APIName shop
 }
 
 function Get-SCCDataCustomerSearchResult {
     param (
-        [String]$customer_list_id,
-        [String]$email
+        [Parameter(Mandatory)][String]$customer_list_id,
+        [Parameter(Mandatory)][String]$email
     )    
     $URL = "https://$Script:SCCAPIRoot/s/-/dw/data/v18_3/customer_lists/$customer_list_id/customer_search"
     $Body = New-SCCSearchRequest -query (
@@ -90,17 +92,22 @@ function Get-SCCDataCustomerSearchResult {
     ) |
     ConvertTo-Json -Depth 100
 
-    Invoke-SCCAPIFunction -URL $URL -Body $Body -Method Post
+    Invoke-SCCAPIFunction -URL $URL -Body $Body -Method Post -APIName data
 }
 
 function Invoke-SCCAPIFunction {
     param (
         [Parameter(Mandatory)]$URL,
-        [Parameter(Mandatory)]$Body,
-        $Method,
-        [ValidatesSet("data","shop")][Parameter(Mandatory)]$APIName
+        $Body,
+        [Parameter(Mandatory)]$Method,
+        [Validateset("data","shop")][Parameter(Mandatory)]$APIName
     )
-    $AccessToken = Get-SCCOAuthAccessToken -GrantType
+    $GrantType = if($APIName -eq "data") {
+        "APIClient"
+    } elseif ($APIName -eq "shop") {
+        "BusinessManagerUser"
+    }
+    $AccessToken = Get-SCCOAuthAccessToken -GrantType $GrantType
 
     Invoke-RestMethod -Uri $URL -Method $Method -Headers @{ 
         "x-dw-client-id" = $Script:SCCAPIClientCredential.UserName
