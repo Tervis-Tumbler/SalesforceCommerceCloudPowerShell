@@ -73,10 +73,11 @@ function Get-SCCDataCustomerListCustomer {
 function Get-SCCShopCustomer {
     param (
         [Parameter(Mandatory)][String]$customer_id,
-        $SiteName
+        [Parameter(Mandatory)][String]$SiteName,
+        [String]$expand
     )
-    $URL = "https://$Script:SCCAPIRoot/s/-/dw/shop/v18_3/customers/$customer_id"
-    $URL = "https://$Script:SCCAPIRoot/s/$SiteName/dw/shop/v18_3/customers/$customer_id"
+    $QueryString = @{expand = $expand} | ConvertTo-URLEncodedQueryStringParameterString
+    $URL = "https://$Script:SCCAPIRoot/s/$SiteName/dw/shop/v18_3/customers/$($customer_id)?$QueryString"
 
     Invoke-SCCAPIFunction -URL $URL -Method Get -APIName shop
 }
@@ -121,10 +122,13 @@ function Get-SCCAPIURL {
     param (
         [ValidatesSet("data","shop")][Parameter(Mandatory)]$APIName,
         [ValidatesSet("16_9","18_3")][Parameter(Mandatory)]$Version,
-        [Parameter(Mandatory)]$SiteName
+        [Parameter(Mandatory,ParameterSetName="SiteName")]$SiteName,
+        [Parameter(ParameterSetName="NoSiteName")][Switch]$NoSiteName,
+        $Resource
     )
+    $SiteURLPart = if($SiteName){"s/$SiteName/"} elseif (-not $NoSiteName) {"s/-/"}
 
-    "https://$Script:SCCAPIRoot/$(if($SiteName){"s/$SiteName/"})dw/$APIName/v$Version/"
+    "https://$Script:SCCAPIRoot/$($SiteURLPart)dw/$APIName/v$Version/$Resource"
 }
 
 function Get-SCCOAuthAccessToken {
