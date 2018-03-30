@@ -2,13 +2,13 @@
 
 Describe "SalesforceCommerceCloudPowerShell" {    
     It "ConvertTo-HttpBasicAuthorizationHeaderValue Credential" {
-        $UserName = "test"
-        $Password = "mypassword" | ConvertTo-SecureString -asPlainText -Force
+        $UserName = "ClientID"
+        $Password = "MyPassword" | ConvertTo-SecureString -asPlainText -Force
         $Credential = New-Object System.Management.Automation.PSCredential($UserName,$Password)
 
         $Credential | 
         ConvertTo-HttpBasicAuthorizationHeaderValue -Type Basic |
-        Should -BeExactly "Basic dGVzdDpteXBhc3N3b3Jk"
+        Should -BeExactly "Basic Q2xpZW50SUQ6TXlQYXNzd29yZA=="
     }
 
     It "ConvertTo-HttpBasicAuthorizationHeaderValue OAuthAccessToken" {
@@ -22,6 +22,19 @@ Describe "SalesforceCommerceCloudPowerShell" {
         $AccessToken | 
         ConvertTo-HttpBasicAuthorizationHeaderValue | 
         Should -BeExactly "Bearer 3206bd3c-a325-4863-9885-43991a2aadda"
+    }
+
+    It "New-SCCAuthAccessTokenBusinessManagerUserAuthorizationHeaderValue" {
+        $UserName = "ClientID"
+        $Password = "MyPassword" | ConvertTo-SecureString -asPlainText -Force
+        $APIClientCredential = New-Object System.Management.Automation.PSCredential($UserName,$Password)
+
+        $UserName = "BusinessManagerUserName"
+        $Password = "OtherPassword" | ConvertTo-SecureString -asPlainText -Force
+        $BusinessManagerUserCredential = New-Object System.Management.Automation.PSCredential($UserName,$Password)
+
+        New-SCCAuthAccessTokenBusinessManagerUserAuthorizationHeaderValue -APIClientCredential $APIClientCredential -BusinessManagerUserCredential $BusinessManagerUserCredential | 
+        Should -BeExactly "Basic QnVzaW5lc3NNYW5hZ2VyVXNlck5hbWU6T3RoZXJQYXNzd29yZDpNeVBhc3N3b3Jk"
     }
 
     Context "New-SCCSearchRequest" {
