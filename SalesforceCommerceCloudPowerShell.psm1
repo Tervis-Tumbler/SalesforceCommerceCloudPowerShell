@@ -124,22 +124,21 @@ function Get-SCCOAuthAccessToken {
     param (
         [ValidateSet("APIClient","BusinessManagerUser")][Parameter(Mandatory)]$GrantType
     )
-    $OAuthURIRoot = "https://account.demandware.com/dw/oauth2/access_token"
 
     if ($GrantType -eq "APIClient") {
-        $URI = $OAuthURIRoot
+        $URI = "https://account.demandware.com/dw/oauth2/access_token"
         $GrantTypeValue = "client_credentials"
         $Authorization = $Script:SCCAPIClientCredential | 
             ConvertTo-HttpBasicAuthorizationHeaderValue -Type Basic
     } elseif ($GrantType -eq "BusinessManagerUser") {
-        $URI = "$($OAuthURIRoot)?client_id=$($Credential.UserName)"
+        $URI = "https://$($Script:SCCAPIRoot)/dw/oauth2/access_token?client_id=$($Script:SCCAPIClientCredential.UserName)"
         $GrantTypeValue = "urn:demandware:params:oauth:grant-type:client-id:dwsid:dwsecuretoken"
         $Authorization = 
             New-SCCAuthAccessTokenBusinessManagerUserAuthorizationHeaderValue -APIClientCredential $Script:SCCAPIClientCredential -BusinessManagerUserCredential $Script:SCCAPIBusinessManagerUserCredential
     }
 
-    Invoke-RestMethod -Uri $URI -Method Post -Headers @{ 
-        "x-dw-client-id" = $Credential.UserName
+    Invoke-RestMethod -Uri $URI -Method Post -Headers @{
+        "x-dw-client-id" = $Script:SCCAPIClientCredential.UserName
         "Accept" = "application/json"
         "Authorization" = $Authorization
     }  -Body "grant_type=$GrantTypeValue" -ContentType "application/x-www-form-urlencoded" -UseBasicParsing
